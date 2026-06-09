@@ -1,0 +1,490 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); }
+  .studio { display: flex; height: 620px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); overflow: hidden; background: var(--color-background-primary); }
+  .sidebar { width: 200px; border-right: 0.5px solid var(--color-border-tertiary); background: var(--color-background-secondary); display: flex; flex-direction: column; }
+  .logo { padding: 16px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .logo-text { font-size: 15px; font-weight: 500; color: var(--color-text-primary); }
+  .logo-sub { font-size: 11px; color: var(--color-text-secondary); }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; font-size: 13px; color: var(--color-text-secondary); cursor: pointer; border-left: 2px solid transparent; transition: all 0.15s; }
+  .nav-item:hover { background: var(--color-background-primary); color: var(--color-text-primary); }
+  .nav-item.active { background: var(--color-background-primary); color: var(--color-text-primary); border-left: 2px solid #7F77DD; font-weight: 500; }
+  .nav-item i { font-size: 16px; }
+  .nav-section { font-size: 10px; color: var(--color-text-tertiary); padding: 12px 16px 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { padding: 14px 20px; border-bottom: 0.5px solid var(--color-border-tertiary); display: flex; align-items: center; justify-content: space-between; }
+  .topbar-title { font-size: 15px; font-weight: 500; color: var(--color-text-primary); }
+  .topbar-sub { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+  .content { flex: 1; overflow-y: auto; padding: 20px; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .field-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 6px; font-weight: 500; }
+  .field-row { margin-bottom: 16px; }
+  textarea { width: 100%; min-height: 90px; padding: 10px; font-size: 13px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); resize: vertical; font-family: var(--font-sans); }
+  textarea:focus { outline: none; border-color: #7F77DD; }
+  select { width: 100%; padding: 8px 10px; font-size: 13px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); }
+  .style-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .style-chip { padding: 7px 10px; font-size: 12px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); text-align: center; cursor: pointer; background: var(--color-background-primary); color: var(--color-text-secondary); transition: all 0.15s; }
+  .style-chip:hover { border-color: #AFA9EC; color: #534AB7; background: #EEEDFE; }
+  .style-chip.selected { border-color: #7F77DD; background: #EEEDFE; color: #3C3489; font-weight: 500; }
+  .btn-primary { background: #534AB7; color: white; border: none; padding: 10px 20px; font-size: 13px; font-weight: 500; border-radius: var(--border-radius-md); cursor: pointer; display: flex; align-items: center; gap: 8px; }
+  .btn-primary:hover { background: #3C3489; }
+  .btn-primary:disabled { background: var(--color-background-secondary); color: var(--color-text-tertiary); cursor: not-allowed; }
+  .btn-outline { background: transparent; color: var(--color-text-secondary); border: 0.5px solid var(--color-border-secondary); padding: 7px 14px; font-size: 13px; border-radius: var(--border-radius-md); cursor: pointer; }
+  .btn-outline:hover { background: var(--color-background-secondary); }
+  .platform-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .ptab { padding: 6px 14px; font-size: 12px; border: 0.5px solid var(--color-border-secondary); border-radius: 20px; cursor: pointer; color: var(--color-text-secondary); background: var(--color-background-primary); transition: all 0.15s; }
+  .ptab.active { background: #534AB7; color: white; border-color: #534AB7; }
+  .result-card { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 14px; background: var(--color-background-secondary); margin-bottom: 12px; position: relative; }
+  .result-card .platform-badge { font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 4px; display: inline-block; margin-bottom: 8px; }
+  .result-card .prompt-text { font-size: 13px; color: var(--color-text-primary); line-height: 1.6; }
+  .result-card .copy-btn { position: absolute; top: 12px; right: 12px; background: transparent; border: 0.5px solid var(--color-border-secondary); padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; color: var(--color-text-secondary); }
+  .result-card .copy-btn:hover { background: var(--color-background-primary); }
+  .loader { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; gap: 12px; }
+  .spinner { width: 28px; height: 28px; border: 2px solid var(--color-border-tertiary); border-top-color: #7F77DD; border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loader-text { font-size: 13px; color: var(--color-text-secondary); }
+  .scene-card { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 14px; background: var(--color-background-primary); margin-bottom: 10px; }
+  .scene-num { font-size: 11px; font-weight: 500; color: #534AB7; background: #EEEDFE; padding: 2px 8px; border-radius: 20px; display: inline-block; margin-bottom: 8px; }
+  .scene-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px; }
+  .scene-prompt { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; }
+  .scene-duration { font-size: 11px; color: var(--color-text-tertiary); margin-top: 6px; }
+  .lib-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); margin-bottom: 8px; background: var(--color-background-primary); }
+  .lib-item-info { flex: 1; }
+  .lib-item-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+  .lib-item-meta { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
+  .lib-actions { display: flex; gap: 6px; }
+  .lib-actions button { background: transparent; border: 0.5px solid var(--color-border-secondary); padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer; color: var(--color-text-secondary); }
+  .lib-actions button:hover { background: var(--color-background-secondary); }
+  .empty-state { text-align: center; padding: 40px; color: var(--color-text-secondary); font-size: 13px; }
+  .empty-state i { font-size: 32px; display: block; margin-bottom: 10px; color: var(--color-text-tertiary); }
+  .tip-box { background: #EEEDFE; border: 0.5px solid #AFA9EC; border-radius: var(--border-radius-md); padding: 12px 14px; font-size: 12px; color: #3C3489; line-height: 1.6; margin-bottom: 16px; }
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .tag { font-size: 11px; padding: 3px 8px; border-radius: 20px; }
+  .tag-purple { background: #EEEDFE; color: #534AB7; }
+  .tag-teal { background: #E1F5EE; color: #0F6E56; }
+  .tag-coral { background: #FAECE7; color: #993C1D; }
+  .tag-amber { background: #FAEEDA; color: #854F0B; }
+  .streaming-text { font-size: 13px; color: var(--color-text-primary); line-height: 1.6; white-space: pre-wrap; }
+</style>
+
+<h2 class="sr-only">AI Video Generation Studio — create, optimize, and organize video generation prompts for Runway, Kling, Luma, and Pika</h2>
+
+<div class="studio">
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-text"><i class="ti ti-video" aria-hidden="true" style="font-size:16px; vertical-align:-2px; margin-right:6px; color:#7F77DD;"></i>VidStudio</div>
+      <div class="logo-sub">AI Video Toolkit</div>
+    </div>
+    <div style="padding: 8px 0; flex:1;">
+      <div class="nav-section">Create</div>
+      <div class="nav-item active" onclick="switchPanel('prompt')"><i class="ti ti-wand" aria-hidden="true"></i> Prompt Engineer</div>
+      <div class="nav-item" onclick="switchPanel('storyboard')"><i class="ti ti-layout-list" aria-hidden="true"></i> Storyboard</div>
+      <div class="nav-section">Manage</div>
+      <div class="nav-item" onclick="switchPanel('library')"><i class="ti ti-bookmark" aria-hidden="true"></i> Prompt Library</div>
+      <div class="nav-section">Info</div>
+      <div class="nav-item" onclick="switchPanel('platforms')"><i class="ti ti-device-tv" aria-hidden="true"></i> Platforms</div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title" id="panel-title">Prompt Engineer</div>
+        <div class="topbar-sub" id="panel-sub">Describe your idea — AI optimizes it for each platform</div>
+      </div>
+      <div id="topbar-action"></div>
+    </div>
+
+    <div class="content">
+
+      <!-- PROMPT PANEL -->
+      <div class="panel active" id="panel-prompt">
+        <div class="tip-box"><i class="ti ti-bulb" aria-hidden="true" style="vertical-align:-2px;"></i> Describe your video idea in plain language. The AI will rewrite it as optimized prompts for Runway, Kling, Luma, and Pika.</div>
+        <div class="field-row">
+          <div class="field-label">Your video idea</div>
+          <textarea id="user-idea" placeholder="e.g. A futuristic city at night with flying cars and neon lights, cinematic drone shot slowly moving forward..."></textarea>
+        </div>
+        <div class="row-2">
+          <div class="field-row">
+            <div class="field-label">Visual style</div>
+            <div class="style-grid" id="style-grid">
+              <div class="style-chip selected" onclick="selectStyle(this)">Cinematic</div>
+              <div class="style-chip" onclick="selectStyle(this)">Anime</div>
+              <div class="style-chip" onclick="selectStyle(this)">Realistic</div>
+              <div class="style-chip" onclick="selectStyle(this)">Documentary</div>
+              <div class="style-chip" onclick="selectStyle(this)">Abstract</div>
+              <div class="style-chip" onclick="selectStyle(this)">3D Render</div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-label">Duration / aspect ratio</div>
+            <select id="duration" style="margin-bottom:8px;">
+              <option>5 seconds</option>
+              <option>8 seconds</option>
+              <option selected>10 seconds</option>
+              <option>15 seconds</option>
+            </select>
+            <select id="aspect">
+              <option selected>16:9 (landscape)</option>
+              <option>9:16 (vertical / Reels)</option>
+              <option>1:1 (square)</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-label">Target platform(s)</div>
+          <div class="platform-tabs">
+            <div class="ptab active" onclick="togglePlatform(this)">All</div>
+            <div class="ptab" onclick="togglePlatform(this)">Runway</div>
+            <div class="ptab" onclick="togglePlatform(this)">Kling</div>
+            <div class="ptab" onclick="togglePlatform(this)">Luma</div>
+            <div class="ptab" onclick="togglePlatform(this)">Pika</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:10px; margin-bottom:20px;">
+          <button class="btn-primary" id="gen-btn" onclick="generatePrompts()"><i class="ti ti-sparkles" aria-hidden="true"></i> Generate Prompts</button>
+          <button class="btn-outline" onclick="clearPrompt()">Clear</button>
+        </div>
+        <div id="results-area"></div>
+      </div>
+
+      <!-- STORYBOARD PANEL -->
+      <div class="panel" id="panel-storyboard">
+        <div class="tip-box"><i class="ti ti-layout-list" aria-hidden="true" style="vertical-align:-2px;"></i> Describe your full video concept and the AI will break it into scenes with individual prompts.</div>
+        <div class="field-row">
+          <div class="field-label">Video concept / script summary</div>
+          <textarea id="sb-concept" rows="4" placeholder="e.g. A 30-second brand ad for a coffee brand. Start with beans being harvested at sunrise, then roasting, then a cup being poured in a cozy café, ending with a logo reveal."></textarea>
+        </div>
+        <div class="row-2">
+          <div class="field-row">
+            <div class="field-label">Number of scenes</div>
+            <select id="sb-scenes">
+              <option>3 scenes</option>
+              <option selected>5 scenes</option>
+              <option>7 scenes</option>
+              <option>10 scenes</option>
+            </select>
+          </div>
+          <div class="field-row">
+            <div class="field-label">Video style</div>
+            <select id="sb-style">
+              <option>Cinematic</option>
+              <option>Commercial / Brand</option>
+              <option>Documentary</option>
+              <option>Music Video</option>
+              <option>Social Media / Short</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn-primary" id="sb-btn" onclick="generateStoryboard()"><i class="ti ti-layout-list" aria-hidden="true"></i> Build Storyboard</button>
+        <div id="sb-results" style="margin-top:20px;"></div>
+      </div>
+
+      <!-- LIBRARY PANEL -->
+      <div class="panel" id="panel-library">
+        <div id="library-list"></div>
+      </div>
+
+      <!-- PLATFORMS PANEL -->
+      <div class="panel" id="panel-platforms">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="result-card" style="background: var(--color-background-primary);">
+            <div class="platform-badge" style="background:#E1F5EE; color:#0F6E56;">Runway Gen-4</div>
+            <div style="font-size: 13px; color: var(--color-text-primary); font-weight:500; margin-bottom:6px;">Best for</div>
+            <div style="font-size: 12px; color: var(--color-text-secondary); line-height:1.6;">Cinematic quality, motion control, character consistency, precise camera movements. Industry-standard for professional video.</div>
+            <div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:4px;">
+              <span class="tag tag-teal">Camera control</span>
+              <span class="tag tag-teal">Cinematic</span>
+              <span class="tag tag-teal">Consistency</span>
+            </div>
+          </div>
+          <div class="result-card" style="background: var(--color-background-primary);">
+            <div class="platform-badge" style="background:#FAECE7; color:#993C1D;">Kling 1.6</div>
+            <div style="font-size: 13px; color: var(--color-text-primary); font-weight:500; margin-bottom:6px;">Best for</div>
+            <div style="font-size: 12px; color: var(--color-text-secondary); line-height:1.6;">Long duration clips (up to 2 min), realistic physics, face preservation, cost-effective for bulk generation.</div>
+            <div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:4px;">
+              <span class="tag tag-coral">Long clips</span>
+              <span class="tag tag-coral">Physics</span>
+              <span class="tag tag-coral">Affordable</span>
+            </div>
+          </div>
+          <div class="result-card" style="background: var(--color-background-primary);">
+            <div class="platform-badge" style="background:#EEEDFE; color:#534AB7;">Luma Dream Machine</div>
+            <div style="font-size: 13px; color: var(--color-text-primary); font-weight:500; margin-bottom:6px;">Best for</div>
+            <div style="font-size: 12px; color: var(--color-text-secondary); line-height:1.6;">Fluid motion, dreamy aesthetics, image-to-video, creative abstract visuals, fast generation speed.</div>
+            <div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:4px;">
+              <span class="tag tag-purple">Fluid motion</span>
+              <span class="tag tag-purple">Img2Video</span>
+              <span class="tag tag-purple">Fast</span>
+            </div>
+          </div>
+          <div class="result-card" style="background: var(--color-background-primary);">
+            <div class="platform-badge" style="background:#FAEEDA; color:#854F0B;">Pika 2.1</div>
+            <div style="font-size: 13px; color: var(--color-text-primary); font-weight:500; margin-bottom:6px;">Best for</div>
+            <div style="font-size: 12px; color: var(--color-text-secondary); line-height:1.6;">Quick iterations, stylized looks, adding effects to existing videos, social media content, ease of use.</div>
+            <div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:4px;">
+              <span class="tag tag-amber">Social media</span>
+              <span class="tag tag-amber">Effects</span>
+              <span class="tag tag-amber">Easy</span>
+            </div>
+          </div>
+        </div>
+        <div class="tip-box" style="margin-top:16px;"><i class="ti ti-info-circle" aria-hidden="true" style="vertical-align:-2px;"></i> Use the Prompt Engineer to generate platform-specific prompts tailored to each of these tools' strengths.</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const panels = {
+  prompt: { title: 'Prompt Engineer', sub: 'Describe your idea — AI optimizes it for each platform' },
+  storyboard: { title: 'Storyboard Planner', sub: 'Break your video concept into scenes automatically' },
+  library: { title: 'Prompt Library', sub: 'Your saved prompts organized by platform and style' },
+  platforms: { title: 'Platform Guide', sub: 'Learn the strengths of each AI video tool' }
+};
+
+let savedPrompts = [];
+let selectedStyle = 'Cinematic';
+let selectedPlatforms = ['All'];
+
+function switchPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  document.getElementById('panel-title').textContent = panels[name].title;
+  document.getElementById('panel-sub').textContent = panels[name].sub;
+  if (name === 'library') renderLibrary();
+}
+
+function selectStyle(el) {
+  document.querySelectorAll('.style-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedStyle = el.textContent;
+}
+
+function togglePlatform(el) {
+  const val = el.textContent;
+  if (val === 'All') {
+    document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    selectedPlatforms = ['All'];
+  } else {
+    document.querySelectorAll('.ptab').forEach(t => { if(t.textContent==='All') t.classList.remove('active'); });
+    el.classList.toggle('active');
+    selectedPlatforms = [...document.querySelectorAll('.ptab.active')].map(t => t.textContent).filter(t => t !== 'All');
+    if (selectedPlatforms.length === 0) {
+      document.querySelectorAll('.ptab')[0].classList.add('active');
+      selectedPlatforms = ['All'];
+    }
+  }
+}
+
+function clearPrompt() {
+  document.getElementById('user-idea').value = '';
+  document.getElementById('results-area').innerHTML = '';
+}
+
+function getSelectedPlatforms() {
+  if (selectedPlatforms.includes('All')) return ['Runway', 'Kling', 'Luma', 'Pika'];
+  return selectedPlatforms;
+}
+
+async function generatePrompts() {
+  const idea = document.getElementById('user-idea').value.trim();
+  if (!idea) { document.getElementById('user-idea').style.borderColor = '#E24B4A'; setTimeout(() => document.getElementById('user-idea').style.borderColor = '', 1500); return; }
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;"></div> Generating...';
+  const platforms = getSelectedPlatforms();
+  const duration = document.getElementById('duration').value;
+  const aspect = document.getElementById('aspect').value;
+  const area = document.getElementById('results-area');
+  area.innerHTML = '<div class="loader"><div class="spinner"></div><div class="loader-text">AI is crafting your prompts...</div></div>';
+
+  const platformColors = { Runway: ['#E1F5EE','#0F6E56'], Kling: ['#FAECE7','#993C1D'], Luma: ['#EEEDFE','#534AB7'], Pika: ['#FAEEDA','#854F0B'] };
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{
+          role: "user",
+          content: `You are an expert AI video prompt engineer. The user wants to generate a video with the following idea:
+
+"${idea}"
+
+Style: ${selectedStyle}
+Duration: ${duration}
+Aspect ratio: ${aspect}
+Target platforms: ${platforms.join(', ')}
+
+Write an optimized video generation prompt for EACH of these platforms: ${platforms.join(', ')}.
+Each prompt must be tailored to that platform's strengths and prompt format.
+- Runway: Focus on camera movement, lighting, cinematic terms, motion descriptors
+- Kling: Focus on physics, subject detail, environment, realistic motion
+- Luma: Focus on fluid transitions, mood, atmosphere, dreamy language
+- Pika: Focus on concise visual style, effects, social-media-friendly language
+
+Respond in this exact JSON format only, no preamble or markdown:
+{
+  "prompts": [
+    { "platform": "Runway", "prompt": "..." },
+    { "platform": "Kling", "prompt": "..." },
+    { "platform": "Luma", "prompt": "..." },
+    { "platform": "Pika", "prompt": "..." }
+  ]
+}
+
+Only include platforms from: ${platforms.join(', ')}`
+        }]
+      })
+    });
+    const data = await response.json();
+    const text = data.content.map(i => i.text || '').join('');
+    const clean = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    area.innerHTML = '';
+    parsed.prompts.forEach(item => {
+      const [bg, fg] = platformColors[item.platform] || ['#F1EFE8','#444441'];
+      const card = document.createElement('div');
+      card.className = 'result-card';
+      card.innerHTML = `
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+          <span class="platform-badge" style="background:${bg}; color:${fg};">${item.platform}</span>
+          <div style="display:flex; gap:6px;">
+            <button class="copy-btn" onclick="copyText(this, \`${item.prompt.replace(/`/g,'\\`')}\`)"><i class="ti ti-copy" aria-hidden="true"></i> Copy</button>
+            <button class="copy-btn" onclick="savePrompt('${item.platform}', \`${item.prompt.replace(/`/g,'\\`')}\`, '${selectedStyle}')"><i class="ti ti-bookmark" aria-hidden="true"></i> Save</button>
+          </div>
+        </div>
+        <div class="prompt-text">${item.prompt}</div>
+      `;
+      area.appendChild(card);
+    });
+  } catch(e) {
+    area.innerHTML = '<div class="loader-text" style="color:var(--color-text-danger);">Something went wrong. Please try again.</div>';
+  }
+  btn.disabled = false;
+  btn.innerHTML = '<i class="ti ti-sparkles" aria-hidden="true"></i> Generate Prompts';
+}
+
+async function generateStoryboard() {
+  const concept = document.getElementById('sb-concept').value.trim();
+  if (!concept) { document.getElementById('sb-concept').style.borderColor = '#E24B4A'; setTimeout(() => document.getElementById('sb-concept').style.borderColor = '', 1500); return; }
+  const btn = document.getElementById('sb-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;"></div> Building...';
+  const numScenes = document.getElementById('sb-scenes').value.split(' ')[0];
+  const style = document.getElementById('sb-style').value;
+  const area = document.getElementById('sb-results');
+  area.innerHTML = '<div class="loader"><div class="spinner"></div><div class="loader-text">Building your storyboard...</div></div>';
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{
+          role: "user",
+          content: `You are an expert video director and AI prompt engineer. Break this video concept into ${numScenes} scenes for an AI video generation storyboard.
+
+Concept: "${concept}"
+Style: ${style}
+
+For each scene, provide:
+- A short scene title
+- A video generation prompt (optimized for Runway Gen-4)
+- Duration in seconds (2-8 sec per scene, total should make sense for the concept)
+
+Respond in JSON only, no preamble:
+{
+  "scenes": [
+    {
+      "number": 1,
+      "title": "...",
+      "prompt": "...",
+      "duration": 5
+    }
+  ]
+}`
+        }]
+      })
+    });
+    const data = await response.json();
+    const text = data.content.map(i => i.text || '').join('');
+    const clean = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    area.innerHTML = `<div class="field-label" style="margin-bottom:12px;">${parsed.scenes.length} scenes — total ~${parsed.scenes.reduce((a,s)=>a+s.duration,0)}s</div>`;
+    parsed.scenes.forEach(scene => {
+      const card = document.createElement('div');
+      card.className = 'scene-card';
+      card.innerHTML = `
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <span class="scene-num">Scene ${scene.number}</span>
+          <button class="copy-btn" style="position:static;" onclick="copyText(this, \`${scene.prompt.replace(/`/g,'\\`')}\`)"><i class="ti ti-copy" aria-hidden="true"></i> Copy prompt</button>
+        </div>
+        <div class="scene-title">${scene.title}</div>
+        <div class="scene-prompt">${scene.prompt}</div>
+        <div class="scene-duration"><i class="ti ti-clock" aria-hidden="true" style="vertical-align:-2px;font-size:12px;"></i> ${scene.duration}s</div>
+      `;
+      area.appendChild(card);
+    });
+  } catch(e) {
+    area.innerHTML = '<div class="loader-text">Something went wrong. Please try again.</div>';
+  }
+  btn.disabled = false;
+  btn.innerHTML = '<i class="ti ti-layout-list" aria-hidden="true"></i> Build Storyboard';
+}
+
+function copyText(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.innerHTML = '<i class="ti ti-check" aria-hidden="true"></i> Copied';
+    setTimeout(() => { btn.innerHTML = '<i class="ti ti-copy" aria-hidden="true"></i> Copy'; }, 1500);
+  });
+}
+
+function savePrompt(platform, prompt, style) {
+  savedPrompts.push({ platform, prompt, style, date: new Date().toLocaleDateString() });
+  const btn = event.currentTarget;
+  btn.innerHTML = '<i class="ti ti-check" aria-hidden="true"></i> Saved';
+  setTimeout(() => { btn.innerHTML = '<i class="ti ti-bookmark" aria-hidden="true"></i> Save'; }, 1500);
+}
+
+function renderLibrary() {
+  const area = document.getElementById('library-list');
+  if (savedPrompts.length === 0) {
+    area.innerHTML = '<div class="empty-state"><i class="ti ti-bookmark" aria-hidden="true"></i>No saved prompts yet.<br>Generate prompts and click Save to add them here.</div>';
+    return;
+  }
+  const platformColors = { Runway: ['#E1F5EE','#0F6E56'], Kling: ['#FAECE7','#993C1D'], Luma: ['#EEEDFE','#534AB7'], Pika: ['#FAEEDA','#854F0B'] };
+  area.innerHTML = '';
+  savedPrompts.forEach((item, i) => {
+    const [bg, fg] = platformColors[item.platform] || ['#F1EFE8','#444441'];
+    const el = document.createElement('div');
+    el.className = 'lib-item';
+    el.innerHTML = `
+      <div class="lib-item-info">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+          <span class="platform-badge" style="background:${bg}; color:${fg}; font-size:11px; padding:2px 7px; border-radius:4px;">${item.platform}</span>
+          <span class="tag tag-purple" style="font-size:11px;">${item.style}</span>
+        </div>
+        <div class="lib-item-title" style="font-size:12px; font-weight:400; color:var(--color-text-secondary);">${item.prompt.substring(0,100)}${item.prompt.length>100?'...':''}</div>
+        <div class="lib-item-meta">${item.date}</div>
+      </div>
+      <div class="lib-actions">
+        <button onclick="copyText(this, \`${item.prompt.replace(/`/g,'\\`')}\`)"><i class="ti ti-copy" aria-hidden="true"></i></button>
+        <button onclick="savedPrompts.splice(${i},1); renderLibrary();"><i class="ti ti-trash" aria-hidden="true"></i></button>
+      </div>
+    `;
+    area.appendChild(el);
+  });
+}
+</script>
